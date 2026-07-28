@@ -102,6 +102,41 @@ class TransferControllerTest {
     }
 
     @Test
+    void valorComMaisDeDuasCasasDecimaisRetorna400() throws Exception {
+        String body = objectMapper.writeValueAsString(new TransferRequestFixture(
+                "1111111111", "2222222222", new BigDecimal("1000.999"), LocalDate.now()));
+
+        mockMvc.perform(post("/api/transfers")
+                        .contentType("application/json")
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0]").value(
+                        "amount: Valor da transferência deve ter no máximo 2 casas decimais"));
+    }
+
+    @Test
+    void jsonMalformadoRetorna400NoFormatoApiError() throws Exception {
+        mockMvc.perform(post("/api/transfers")
+                        .contentType("application/json")
+                        .content("{\"originAccount\":\"1111111111\",}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").isNotEmpty())
+                .andExpect(jsonPath("$.path").value("/api/transfers"));
+    }
+
+    @Test
+    void dataEmFormatoInvalidoRetorna400NoFormatoApiError() throws Exception {
+        mockMvc.perform(post("/api/transfers")
+                        .contentType("application/json")
+                        .content("{\"originAccount\":\"1111111111\",\"destinationAccount\":\"2222222222\","
+                                + "\"amount\":1000.00,\"transferDate\":\"28/07/2026\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
     void listaExtratoRetorna200() throws Exception {
         when(transferSchedulingService.listAll()).thenReturn(java.util.List.of());
 

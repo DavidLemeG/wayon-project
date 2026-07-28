@@ -45,6 +45,43 @@ class TransferSchedulingIntegrationTest {
                 .anySatisfy(transfer -> assertThat(transfer.getId()).isEqualTo(createResponse.getBody().getId()));
     }
 
+    /**
+     * O JSON de um agendamento recem-criado (objeto ainda em memoria, vindo do
+     * calculador) precisa ser byte a byte igual ao do mesmo agendamento lido do
+     * banco — caso contrario o cliente recebe duas representacoes diferentes do
+     * mesmo recurso (ex.: "percentageRate":0.082 no POST e 0.0820 no GET).
+     */
+    @Test
+    void representacaoJsonDoPostEDoGetSaoIdenticasParaOMesmoAgendamento() {
+        Map<String, Object> request = new HashMap<>();
+        request.put("originAccount", "6666666666");
+        request.put("destinationAccount", "7777777777");
+        request.put("amount", new BigDecimal("1000.00"));
+        request.put("transferDate", LocalDate.now().plusDays(15).toString());
+
+        String createdJson = restTemplate.postForEntity("/api/transfers", request, String.class).getBody();
+        String statementJson = restTemplate.getForEntity("/api/transfers", String.class).getBody();
+
+        assertThat(statementJson).contains(createdJson);
+    }
+
+    @Test
+    void valorComMaisDeDuasCasasDecimaisERejeitadoEmVezDeArredondadoSilenciosamente() {
+        Map<String, Object> request = new HashMap<>();
+        request.put("originAccount", "8888888888");
+        request.put("destinationAccount", "9999999999");
+        request.put("amount", new BigDecimal("1000.999"));
+        request.put("transferDate", LocalDate.now().toString());
+
+        ResponseEntity<String> response =
+                restTemplate.postForEntity("/api/transfers", request, String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+
+        String statementJson = restTemplate.getForEntity("/api/transfers", String.class).getBody();
+        assertThat(statementJson).doesNotContain("8888888888");
+    }
+
     @Test
     void transferenciaComDataForaDaJanelaNaoEPersistida() {
         Map<String, Object> request = new HashMap<>();
