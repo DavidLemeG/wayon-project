@@ -1,0 +1,307 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-07-28T20:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v8.0.0",
+  "resources": [
+    {
+      "_id": "wrk_wayon_transfers",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "Agendamento de Transferências - Wayon",
+      "description": "API de agendamento de transferências financeiras. Datas dos cenários de sucesso/corner case foram calculadas relativas a 2026-07-28 (data desta exportação) — se rodar depois dessa data, ajuste o campo transferDate de cada request para manter a mesma faixa de dias pretendida.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_wayon_base",
+      "_type": "environment",
+      "parentId": "wrk_wayon_transfers",
+      "name": "Base Environment",
+      "data": {
+        "baseUrl": "http://localhost:8080"
+      },
+      "dataPropertyOrder": { "&": ["baseUrl"] },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 0
+    },
+    {
+      "_id": "fld_wayon_transfers",
+      "_type": "request_group",
+      "parentId": "wrk_wayon_transfers",
+      "name": "Transferências",
+      "description": "",
+      "metaSortKey": -1000
+    },
+    {
+      "_id": "req_wayon_00_extrato_inicial",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "00 - Extrato (inicial, deve vir vazio em banco H2 recem-subido)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -1000
+    },
+    {
+      "_id": "req_wayon_01_dia0",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "01 - Dia 0 (faixa 0, R$3,00 fixo + 2,5%)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-07-28\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -990
+    },
+    {
+      "_id": "req_wayon_02_dia5",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "02 - Dia 5 (faixa 1-10, R$12,00 fixo + 0%)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-08-02\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -980
+    },
+    {
+      "_id": "req_wayon_03_dia15",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "03 - Dia 15 (faixa 11-20, 8,2%)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-08-12\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -970
+    },
+    {
+      "_id": "req_wayon_04_dia25",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "04 - Dia 25 (faixa 21-30, 6,9%)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-08-22\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -960
+    },
+    {
+      "_id": "req_wayon_05_dia35",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "05 - Dia 35 (faixa 31-40, 4,7%)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-09-01\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -950
+    },
+    {
+      "_id": "req_wayon_06_dia45",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "06 - Dia 45 (faixa 41-50, 1,7%)",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-09-11\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -940
+    },
+    {
+      "_id": "req_wayon_07_fora_janela",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "07 - Corner case: 51 dias, fora da janela 0-50 -> HTTP 422",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-09-17\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -930
+    },
+    {
+      "_id": "req_wayon_08_data_passado",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "08 - Corner case: data de transferência no passado -> HTTP 422",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-07-27\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -920
+    },
+    {
+      "_id": "req_wayon_09_auto_transferencia",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "09 - Corner case: conta de origem == destino (ADR 0008) -> HTTP 422",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"1111111111\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-07-28\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -910
+    },
+    {
+      "_id": "req_wayon_10_conta_invalida",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "10 - Corner case: conta com menos de 10 dígitos -> HTTP 400",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"123\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 1000.00,\n  \"transferDate\": \"2026-08-01\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -900
+    },
+    {
+      "_id": "req_wayon_11_valor_invalido",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "11 - Corner case: valor zero -> HTTP 400",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\",\n  \"destinationAccount\": \"2222222222\",\n  \"amount\": 0,\n  \"transferDate\": \"2026-08-01\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -890
+    },
+    {
+      "_id": "req_wayon_12_campos_ausentes",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "12 - Corner case: campos ausentes -> HTTP 400",
+      "description": "",
+      "method": "POST",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"originAccount\": \"1111111111\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        { "name": "Content-Type", "value": "application/json" }
+      ],
+      "authentication": {},
+      "metaSortKey": -880
+    },
+    {
+      "_id": "req_wayon_13_extrato_final",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "13 - Extrato (final, deve listar os agendamentos aceitos acima)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/api/transfers",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -870
+    },
+    {
+      "_id": "req_wayon_14_h2_console",
+      "_type": "request",
+      "parentId": "fld_wayon_transfers",
+      "name": "14 - H2 Console (usuário sa, senha em branco, JDBC jdbc:h2:mem:transferscheduling)",
+      "description": "",
+      "method": "GET",
+      "url": "{{ _.baseUrl }}/h2-console",
+      "body": {},
+      "parameters": [],
+      "headers": [],
+      "authentication": {},
+      "metaSortKey": -860
+    }
+  ]
+}
