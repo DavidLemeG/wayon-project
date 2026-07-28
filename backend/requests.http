@@ -1,0 +1,194 @@
+### API de Agendamento de Transferências — coleção de requisições
+### Uso no IntelliJ/WebStorm (JetBrains HTTP Client): abra este arquivo e
+### clique no ícone de "play" ao lado de cada requisição.
+### Fora do JetBrains: copie o corpo de cada bloco em `curl`/Postman/Insomnia,
+### substituindo "transferDate" por uma data calculada manualmente (veja o
+### comentário de cada bloco para o offset de dias usado).
+###
+### Os blocos com data usam um pre-request script (suportado nativamente pelo
+### JetBrains HTTP Client) para calcular "hoje + N dias" no momento da
+### execução — evita datas fixas que ficam inválidas com o passar do tempo.
+
+@baseUrl = http://localhost:8080
+
+### 0) Extrato (deve iniciar vazio, num banco H2 recém-subido)
+GET {{baseUrl}}/api/transfers
+
+### 1) Transferência no mesmo dia (faixa 0, R$3,00 fixo + 2,5%)
+< {%
+    const date = new Date();
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 2) Transferência em 5 dias (faixa 1-10, R$12,00 fixo + 0%)
+< {%
+    const date = new Date();
+    date.setDate(date.getDate() + 5);
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 3) Transferência em 15 dias (faixa 11-20, 8,2%)
+< {%
+    const date = new Date();
+    date.setDate(date.getDate() + 15);
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 4) Transferência em 25 dias (faixa 21-30, 6,9%)
+< {%
+    const date = new Date();
+    date.setDate(date.getDate() + 25);
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 5) Transferência em 35 dias (faixa 31-40, 4,7%)
+< {%
+    const date = new Date();
+    date.setDate(date.getDate() + 35);
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 6) Transferência em 45 dias (faixa 41-50, 1,7%)
+< {%
+    const date = new Date();
+    date.setDate(date.getDate() + 45);
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 7) Corner case: 51 dias — fora da janela válida (0-50) -> HTTP 422
+< {%
+    const date = new Date();
+    date.setDate(date.getDate() + 51);
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 8) Corner case: data de transferência no passado -> HTTP 422
+< {%
+    const date = new Date();
+    date.setDate(date.getDate() - 1);
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 9) Corner case: conta de origem == conta de destino -> HTTP 422
+### (ver ADR 0008)
+< {%
+    const date = new Date();
+    request.variables.set("transferDate", date.toISOString().split("T")[0]);
+%}
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "1111111111",
+  "amount": 1000.00,
+  "transferDate": "{{transferDate}}"
+}
+
+### 10) Corner case: conta com menos de 10 dígitos -> HTTP 400
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "123",
+  "destinationAccount": "2222222222",
+  "amount": 1000.00,
+  "transferDate": "2026-08-01"
+}
+
+### 11) Corner case: valor zero/negativo -> HTTP 400
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111",
+  "destinationAccount": "2222222222",
+  "amount": 0,
+  "transferDate": "2026-08-01"
+}
+
+### 12) Corner case: campos ausentes -> HTTP 400
+POST {{baseUrl}}/api/transfers
+Content-Type: application/json
+
+{
+  "originAccount": "1111111111"
+}
+
+### 13) Extrato final (deve listar todos os agendamentos aceitos acima)
+GET {{baseUrl}}/api/transfers
+
+### H2 Console (usuário: sa, senha: em branco, JDBC URL: jdbc:h2:mem:transferscheduling)
+GET {{baseUrl}}/h2-console
