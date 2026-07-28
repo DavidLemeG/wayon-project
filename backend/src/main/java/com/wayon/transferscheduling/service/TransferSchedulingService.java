@@ -35,14 +35,21 @@ public class TransferSchedulingService {
 
         LocalDate schedulingDate = LocalDate.now(SCHEDULING_ZONE);
 
+        // Normaliza para a mesma escala da coluna NUMERIC(19,2) ANTES de calcular a
+        // taxa, garantindo que a taxa persistida seja sempre coerente com o valor
+        // persistido. Nao arredonda: @Digits(fraction = 2) no TransferRequest ja
+        // rejeita valores com mais casas decimais, entao setScale aqui e sem perda
+        // (e lanca ArithmeticException, alto e claro, se essa garantia for violada).
+        BigDecimal normalizedAmount = amount.setScale(2);
+
         // Cálculo de taxa acontece antes de qualquer persistência: se a data estiver
         // fora da janela válida, a exceção interrompe o fluxo e nada é salvo.
-        Fee fee = feeCalculator.calculate(schedulingDate, transferDate, amount);
+        Fee fee = feeCalculator.calculate(schedulingDate, transferDate, normalizedAmount);
 
         TransferSchedule transferSchedule = TransferSchedule.builder()
                 .originAccount(originAccount)
                 .destinationAccount(destinationAccount)
-                .amount(amount)
+                .amount(normalizedAmount)
                 .fixedFee(fee.getFixedFee())
                 .percentageRate(fee.getPercentageRate())
                 .percentageFee(fee.getPercentageFee())

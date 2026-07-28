@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
@@ -24,6 +25,8 @@ public class TransferRequest {
 
     @NotNull(message = "Valor da transferência é obrigatório")
     @DecimalMin(value = "0.01", message = "Valor da transferência deve ser maior que zero")
+    @Digits(integer = 17, fraction = 2,
+            message = "Valor da transferência deve ter no máximo 2 casas decimais")
     private BigDecimal amount;
 
     @NotNull(message = "Data da transferência é obrigatória")
