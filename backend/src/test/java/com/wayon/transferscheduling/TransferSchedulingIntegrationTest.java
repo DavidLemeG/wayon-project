@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,6 +81,28 @@ class TransferSchedulingIntegrationTest {
 
         String statementJson = restTemplate.getForEntity("/api/transfers", String.class).getBody();
         assertThat(statementJson).doesNotContain("8888888888");
+    }
+
+    @Test
+    void extratoRetornaAgendamentosMaisRecentesPrimeiro() {
+        postTransfer("1010101010", "2020202020", LocalDate.now().plusDays(3));
+        postTransfer("3030303030", "4040404040", LocalDate.now().plusDays(4));
+
+        ResponseEntity<TransferResponse[]> response =
+                restTemplate.getForEntity("/api/transfers", TransferResponse[].class);
+
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody()).isSortedAccordingTo(
+                Comparator.comparing(TransferResponse::getId).reversed());
+    }
+
+    private void postTransfer(String origin, String destination, LocalDate transferDate) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("originAccount", origin);
+        request.put("destinationAccount", destination);
+        request.put("amount", new BigDecimal("100.00"));
+        request.put("transferDate", transferDate.toString());
+        restTemplate.postForEntity("/api/transfers", request, String.class);
     }
 
     @Test
