@@ -14,6 +14,7 @@ também pode consultar o extrato de todos os agendamentos cadastrados.
 - [Como rodar localmente](#como-rodar-localmente)
 - [Como testar](#como-testar)
 - [Decisões técnicas](#decisões-técnicas)
+- [Observabilidade](#observabilidade)
 - [Suposições assumidas](#suposições-assumidas)
 - [O que faria com mais tempo](#o-que-faria-com-mais-tempo)
 - [Regras do enunciado](#regras-do-enunciado)
@@ -115,15 +116,17 @@ cd backend
 ./mvnw test
 ```
 
-39 testes: fronteiras da tabela de taxas (`BracketFeeCalculatorTest`,
+49 testes: fronteiras da tabela de taxas (`BracketFeeCalculatorTest`,
 17 casos — cada faixa e as rejeições de data fora da janela/no passado),
 orquestração com mocks (`TransferSchedulingServiceTest`, prova que
 `repository.save()` nunca roda quando a taxa ou a regra de
 autotransferência rejeitam o agendamento), contrato HTTP
 (`TransferControllerTest`, `@WebMvcTest`), CORS (`CorsConfigTest`,
-`MockMvc` — preflight autorizado e recusado) e um teste de integração
-ponta a ponta com H2 real (`TransferSchedulingIntegrationTest`,
-`@SpringBootTest` + `TestRestTemplate`).
+`MockMvc` — preflight autorizado e recusado), mascaramento de dados
+sensíveis em log (`AccountMaskerTest`, prova que a conta completa nunca
+aparece) e um teste de integração ponta a ponta com H2 real
+(`TransferSchedulingIntegrationTest`, `@SpringBootTest` +
+`TestRestTemplate`).
 
 ### Frontend
 
@@ -165,6 +168,38 @@ decisão, consequências e alternativas consideradas para cada uma:
 8. [Bloqueio de autotransferência](docs/adr/0008-bloqueio-auto-transferencia.md)
 9. [CORS configurável no backend](docs/adr/0009-cors-configuravel.md)
 10. [Vue 3 + TypeScript + Vite](docs/adr/0010-vue3-typescript-vite.md)
+11. [Logging de negócio com mascaramento de contas](docs/adr/0011-logging-mascaramento.md)
+
+## Observabilidade
+
+O log conta a história completa de cada requisição — o que entrou, como
+a taxa foi calculada e o que foi persistido ou recusado:
+
+```
+INFO  c.w.t.api.TransferController      : POST /api/transfers recebido: origem=******2132, destino=******6546, valor=222.00, dataTransferencia=2026-08-03
+INFO  c.w.t.service.TransferScheduling… : Taxa calculada: 5 dia(s) entre agendamento e transferencia -> taxa fixa R$ 12.00 + aliquota 0% (R$ 0.00) = total R$ 12.00
+INFO  c.w.t.service.TransferScheduling… : Agendamento id=1 criado: origem=******2132, destino=******6546, valor=R$ 222.00, taxa total=R$ 12.00, transferencia em 2026-08-03, agendado em 2026-07-29
+WARN  c.w.t.service.TransferScheduling… : Agendamento recusado: conta de origem e destino sao a mesma (conta=******2132)
+WARN  c.w.t.a.e.GlobalExceptionHandler  : 422 em /api/transfers: A conta de destino não pode ser a mesma que a conta de origem.
+WARN  c.w.t.a.e.GlobalExceptionHandler  : 400 em /api/transfers: campos invalidos [originAccount: Conta de origem deve conter exatamente 10 dígitos]
+```
+
+Dois pontos deliberados (detalhados na [ADR 0011](docs/adr/0011-logging-mascaramento.md)):
+
+- **Contas saem mascaradas** (`******2132`): log é agregado, retido por
+  muito tempo e lido por quem não teria acesso ao dado — conta completa
+  em texto puro ali é vazamento silencioso. Os 4 últimos dígitos bastam
+  para correlacionar com o registro no banco.
+- **Rejeição de negócio é WARN, não ERROR**: o sistema funcionou como
+  deveria ao recusar. ERROR fica reservado para falha real, então um
+  alerta em cima de ERROR não dispara por causa de cliente enviando
+  data inválida.
+
+Para inspecionar o SQL gerado durante o desenvolvimento:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.arguments=--logging.level.org.hibernate.SQL=DEBUG
+```
 
 ## Suposições assumidas
 
@@ -195,6 +230,27 @@ decisão, consequências e alternativas consideradas para cada uma:
   de encaixar corretamente numa stack Java 11/Spring Boot 2.7 (sem os
   recursos mais modernos de versões atuais do Spring), mas é o tipo de
   proteção que um sistema de transferências real precisaria ter.
+- **Métricas (Micrometer + Prometheus)**: hoje a observabilidade é só
+  log. O passo natural é expor `/actuator/prometheus` com contadores e
+  histogramas do domínio — agendamentos por faixa de taxa, contagem de
+  rejeições por motivo (data fora da janela vs. autotransferência),
+  latência do `POST /api/transfers`, valor total agendado. Isso responde
+  perguntas que log não responde bem ("as rejeições aumentaram esta
+  semana?"), e permite alertar sobre tendência em vez de sobre linha
+  isolada.
+- **Tracing distribuído (OpenTelemetry)**: com um correlation id
+  propagado por header e um span por operação, dá para seguir uma
+  requisição específica através de múltiplas instâncias e serviços.
+  Numa instância só, com log sequencial, ainda é possível acompanhar a
+  história lendo o log; com várias réplicas atrás de um load balancer,
+  deixa de ser.
+- **Containerização (Dockerfile multi-stage + docker-compose)**: hoje
+  subir o projeto exige JDK 11 e Node instalados na máquina, nas
+  versões certas. Um `Dockerfile` multi-stage para o backend (build
+  Maven + runtime JRE slim) e outro para o front (build Vite + nginx
+  servindo o estático), amarrados por um `docker-compose.yml` na raiz,
+  reduziriam a subida a um `docker compose up` — e eliminariam a classe
+  de problema "funciona na minha máquina" com a versão de JDK/Node.
 - **Paginação do extrato**: `GET /api/transfers` devolve a lista
   inteira. Aceitável no escopo do desafio (H2 em memória, volume
   pequeno), mas não escalaria para um extrato com milhares de
