@@ -13,3 +13,4 @@ Registro das decisões técnicas relevantes do projeto, formato
 | [0006](0006-custom-error-handling.md) | Formato de erro customizado, 422 para regra de negócio |
 | [0007](0007-package-by-feature.md) | Package by feature |
 | [0008](0008-bloqueio-auto-transferencia.md) | Bloqueio de autotransferência (origem == destino) |
+| [0009](0009-cors-configuravel.md) | CORS configurável no backend (vs proxy no dev server) |
