@@ -1,6 +1,7 @@
 package com.wayon.transferscheduling.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.wayon.transferscheduling.api.dto.TransferRequest;
 import com.wayon.transferscheduling.domain.transfer.TransferSchedule;
 import com.wayon.transferscheduling.domain.transfer.exception.InvalidTransferDateException;
 import com.wayon.transferscheduling.domain.transfer.exception.SameAccountTransferException;
@@ -51,7 +52,7 @@ class TransferControllerTest {
         when(transferSchedulingService.schedule(anyString(), anyString(), any(), any()))
                 .thenReturn(schedule);
 
-        String body = objectMapper.writeValueAsString(new TransferRequestFixture(
+        String body = objectMapper.writeValueAsString(transferRequest(
                 "1111111111", "2222222222", new BigDecimal("1000.00"), LocalDate.now()));
 
         mockMvc.perform(post("/api/transfers")
@@ -63,7 +64,7 @@ class TransferControllerTest {
 
     @Test
     void contaComFormatoInvalidoRetorna400() throws Exception {
-        String body = objectMapper.writeValueAsString(new TransferRequestFixture(
+        String body = objectMapper.writeValueAsString(transferRequest(
                 "123", "2222222222", new BigDecimal("1000.00"), LocalDate.now()));
 
         mockMvc.perform(post("/api/transfers")
@@ -78,7 +79,7 @@ class TransferControllerTest {
         when(transferSchedulingService.schedule(anyString(), anyString(), any(), any()))
                 .thenThrow(new SameAccountTransferException());
 
-        String body = objectMapper.writeValueAsString(new TransferRequestFixture(
+        String body = objectMapper.writeValueAsString(transferRequest(
                 "1111111111", "1111111111", new BigDecimal("1000.00"), LocalDate.now()));
 
         mockMvc.perform(post("/api/transfers")
@@ -92,7 +93,7 @@ class TransferControllerTest {
         when(transferSchedulingService.schedule(anyString(), anyString(), any(), any()))
                 .thenThrow(new InvalidTransferDateException(51));
 
-        String body = objectMapper.writeValueAsString(new TransferRequestFixture(
+        String body = objectMapper.writeValueAsString(transferRequest(
                 "1111111111", "2222222222", new BigDecimal("1000.00"), LocalDate.now().plusDays(51)));
 
         mockMvc.perform(post("/api/transfers")
@@ -103,7 +104,7 @@ class TransferControllerTest {
 
     @Test
     void valorComMaisDeDuasCasasDecimaisRetorna400() throws Exception {
-        String body = objectMapper.writeValueAsString(new TransferRequestFixture(
+        String body = objectMapper.writeValueAsString(transferRequest(
                 "1111111111", "2222222222", new BigDecimal("1000.999"), LocalDate.now()));
 
         mockMvc.perform(post("/api/transfers")
@@ -144,19 +145,14 @@ class TransferControllerTest {
                 .andExpect(status().isOk());
     }
 
-    private static class TransferRequestFixture {
-        public String originAccount;
-        public String destinationAccount;
-        public BigDecimal amount;
-        public LocalDate transferDate;
-
-        TransferRequestFixture(String originAccount, String destinationAccount,
-                                BigDecimal amount, LocalDate transferDate) {
-            this.originAccount = originAccount;
-            this.destinationAccount = destinationAccount;
-            this.amount = amount;
-            this.transferDate = transferDate;
-        }
+    private TransferRequest transferRequest(String originAccount, String destinationAccount,
+                                              BigDecimal amount, LocalDate transferDate) {
+        TransferRequest request = new TransferRequest();
+        request.setOriginAccount(originAccount);
+        request.setDestinationAccount(destinationAccount);
+        request.setAmount(amount);
+        request.setTransferDate(transferDate);
+        return request;
     }
 
 }
