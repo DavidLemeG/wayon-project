@@ -9,21 +9,23 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 
 @Service
 public class TransferSchedulingService {
 
-    private static final ZoneId SCHEDULING_ZONE = ZoneId.of("America/Sao_Paulo");
-
     private final FeeCalculator feeCalculator;
     private final TransferScheduleRepository repository;
+    private final Clock clock;
 
-    public TransferSchedulingService(FeeCalculator feeCalculator, TransferScheduleRepository repository) {
+    public TransferSchedulingService(FeeCalculator feeCalculator,
+                                      TransferScheduleRepository repository,
+                                      Clock clock) {
         this.feeCalculator = feeCalculator;
         this.repository = repository;
+        this.clock = clock;
     }
 
     @Transactional
@@ -33,7 +35,7 @@ public class TransferSchedulingService {
             throw new SameAccountTransferException();
         }
 
-        LocalDate schedulingDate = LocalDate.now(SCHEDULING_ZONE);
+        LocalDate schedulingDate = LocalDate.now(clock);
 
         // Normaliza para a mesma escala da coluna NUMERIC(19,2) ANTES de calcular a
         // taxa, garantindo que a taxa persistida seja sempre coerente com o valor
@@ -63,7 +65,7 @@ public class TransferSchedulingService {
 
     @Transactional(readOnly = true)
     public List<TransferSchedule> listAll() {
-        return repository.findAll();
+        return repository.findAllByOrderBySchedulingDateDescIdDesc();
     }
 
 }
