@@ -23,9 +23,10 @@ CORS configurado no backend (`CorsConfig`, implementando
 `WebMvcConfigurer.addCorsMappings`), restrito a `/api/**`, aos métodos
 `GET`/`POST` e ao header `Content-Type` — não `allowedOrigins("*")`.
 
-As origens permitidas vêm da propriedade `app.cors.allowed-origins`
-(`application.yml`), com `localhost:5173` (dev server do Vite) e
-`localhost:4173` (`vite preview`, build local) por padrão.
+Os padrões de origem permitidos vêm da propriedade
+`app.cors.allowed-origin-patterns` (`application.yml`), via
+**`allowedOriginPatterns`** (não `allowedOrigins`, ver revisão abaixo),
+com `http://localhost:*` por padrão.
 
 ## Consequências
 - Funciona para qualquer cliente, não só para o front rodando atrás do
@@ -60,3 +61,19 @@ headers que o definem como preflight, e o teste passaria (ou falharia)
 por engano. Isso foi descoberto na prática: a primeira versão do teste
 falhou com `Access-Control-Allow-Origin: null`, enquanto o mesmo
 preflight via `curl` respondia corretamente.
+
+## Revisão — `allowedOriginPatterns` em vez de lista fixa de portas
+Testando localmente (não em teste automatizado, no navegador de verdade)
+apareceu um segundo problema: o Vite incrementa a porta (5174, 5175...)
+quando 5173 já está em uso — o que acontece toda vez que sobra um
+processo `node` de uma sessão anterior rodando em background. A lista
+fixa (`5173,4173`) quebrava o CORS a cada vez que isso acontecia, com o
+erro clássico `No 'Access-Control-Allow-Origin' header is present`.
+
+Trocado `allowedOrigins` (lista exata) por **`allowedOriginPatterns`**
+com o padrão `http://localhost:*`. Resolve a classe inteira do problema
+sem abrir mão da restrição real que importa aqui: continua **só
+localhost**, nunca um domínio arbitrário da internet — só não trava mais
+numa porta específica. `CorsConfigTest` prova os dois lados: 5173 *e*
+5174 autorizados, `http://site-nao-autorizado.com` continua recusado
+com 403.
