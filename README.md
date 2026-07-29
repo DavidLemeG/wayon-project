@@ -135,10 +135,12 @@ cd frontend
 npm run test
 ```
 
-7 testes (Vitest + Vue Test Utils): validação client-side do
+13 testes (Vitest + Vue Test Utils): validação client-side do
 formulário, sucesso com breakdown da taxa exibido, tratamento
-diferenciado de erro 400 (campo inválido) e 422 (regra de negócio), e a
-listagem do extrato (com estado vazio e de erro).
+diferenciado de erro 400 (campo inválido) e 422 (regra de negócio), a
+listagem do extrato (com estado vazio e de erro) e a formatação
+brasileira de datas/valores (`format.spec.ts`, incluindo regressão para
+o deslocamento de fuso ao converter a data ISO da API).
 
 ### Testando a API manualmente
 
