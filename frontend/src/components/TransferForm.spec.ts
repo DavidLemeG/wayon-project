@@ -75,7 +75,10 @@ describe('TransferForm', () => {
       transferDate: '2026-07-28',
     })
     expect(wrapper.text()).toContain('Transferência agendada com sucesso!')
-    expect(wrapper.text()).toContain('R$ 28.00')
+    // Intl usa espaco nao-quebravel (U+00A0) entre "R$" e o numero.
+    const text = wrapper.text().replace(/\u00A0/g, ' ')
+    expect(text).toContain('R$ 28,00')
+    expect(text).toContain('2,50%')
   })
 
   it('exibe os fieldErrors quando a API responde 400', async () => {

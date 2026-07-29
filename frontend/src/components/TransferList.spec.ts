@@ -30,12 +30,27 @@ describe('TransferList', () => {
     const wrapper = mount(TransferList)
     await flushPromises()
 
+    // Intl usa espaco nao-quebravel entre "R$" e o numero. Escapado como
+    // \u00A0 de proposito: o caractere literal e indistinguivel de um espaco
+    // comum no editor, e o replace passa a nao fazer nada sem ninguem notar.
+    const row = wrapper.find('tbody tr').text().replace(/\u00A0/g, ' ')
+    expect(row).toContain('1111111111')
+    expect(row).toContain('2222222222')
+    expect(row).toContain('R$ 1.000,00')
+    expect(row).toContain('8,20%')
+    expect(row).toContain('R$ 82,00')
+  })
+
+  it('exibe as datas no formato brasileiro', async () => {
+    mockedListTransfers.mockResolvedValueOnce([sampleTransfer])
+
+    const wrapper = mount(TransferList)
+    await flushPromises()
+
     const row = wrapper.find('tbody tr')
-    expect(row.text()).toContain('1111111111')
-    expect(row.text()).toContain('2222222222')
-    expect(row.text()).toContain('R$ 1000.00')
-    expect(row.text()).toContain('8.20%')
-    expect(row.text()).toContain('R$ 82.00')
+    expect(row.text()).toContain('12/08/2026')
+    expect(row.text()).toContain('28/07/2026')
+    expect(row.text()).not.toContain('2026-08-12')
   })
 
   it('mostra mensagem de vazio quando nao ha agendamentos', async () => {

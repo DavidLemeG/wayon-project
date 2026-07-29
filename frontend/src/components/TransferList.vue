@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { listTransfers } from '../services/transferService'
 import type { TransferResponse } from '../services/transferTypes'
+import { formatCurrency, formatDate, formatPercent } from '../utils/format'
 
 const transfers = ref<TransferResponse[]>([])
 const loading = ref(true)
@@ -50,12 +51,12 @@ onMounted(reload)
         <tr v-for="transfer in transfers" :key="transfer.id">
           <td>{{ transfer.originAccount }}</td>
           <td>{{ transfer.destinationAccount }}</td>
-          <td>R$ {{ transfer.amount.toFixed(2) }}</td>
-          <td>R$ {{ transfer.fixedFee.toFixed(2) }}</td>
-          <td>{{ (transfer.percentageRate * 100).toFixed(2) }}%</td>
-          <td>R$ {{ transfer.totalFee.toFixed(2) }}</td>
-          <td>{{ transfer.transferDate }}</td>
-          <td>{{ transfer.schedulingDate }}</td>
+          <td>{{ formatCurrency(transfer.amount) }}</td>
+          <td>{{ formatCurrency(transfer.fixedFee) }}</td>
+          <td>{{ formatPercent(transfer.percentageRate) }}</td>
+          <td>{{ formatCurrency(transfer.totalFee) }}</td>
+          <td>{{ formatDate(transfer.transferDate) }}</td>
+          <td>{{ formatDate(transfer.schedulingDate) }}</td>
         </tr>
       </tbody>
     </table>

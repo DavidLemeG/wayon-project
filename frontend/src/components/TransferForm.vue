@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import axios from 'axios'
 import { createTransfer } from '../services/transferService'
 import type { ApiError, TransferResponse } from '../services/transferTypes'
+import { formatCurrency, formatPercent } from '../utils/format'
 
 const emit = defineEmits<{
   created: [transfer: TransferResponse]
@@ -158,9 +159,9 @@ function resetForm() {
     <div v-if="lastCreated" class="alert alert-success">
       <p>Transferência agendada com sucesso!</p>
       <p>
-        Taxa: R$ {{ lastCreated.fixedFee.toFixed(2) }} fixa +
-        {{ (lastCreated.percentageRate * 100).toFixed(2) }}% =
-        <strong>R$ {{ lastCreated.totalFee.toFixed(2) }}</strong>
+        Taxa: {{ formatCurrency(lastCreated.fixedFee) }} fixa +
+        {{ formatPercent(lastCreated.percentageRate) }} =
+        <strong>{{ formatCurrency(lastCreated.totalFee) }}</strong>
       </p>
     </div>
   </form>
