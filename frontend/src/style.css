@@ -1,25 +1,16 @@
+/*
+ * Reset minimo. As cores (fundo, texto, superficies) vem dos design tokens
+ * do preset Aura do PrimeVue (--p-*), que ja tratam tema claro/escuro de
+ * forma consistente — antes havia cores fixas espalhadas pelos componentes,
+ * o que quebrava o contraste no tema escuro (cabecalho da tabela ficava
+ * cinza claro sobre cinza claro).
+ */
 :root {
-  --text: #1f2937;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-
   color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #d1d5db;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-  }
 }
 
 * {
@@ -28,15 +19,19 @@
 
 body {
   margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  color: var(--p-text-color);
+  background: var(--p-content-background);
+  min-height: 100vh;
 }
 
 h1,
 h2 {
-  color: var(--text-h);
+  color: var(--p-text-color);
   font-weight: 600;
-}
-
-input,
-button {
-  font: inherit;
 }

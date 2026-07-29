@@ -22,6 +22,22 @@ export function formatDate(isoDate: string): string {
   return `${day}/${month}/${year}`
 }
 
+/**
+ * Converte o Date do DatePicker para o formato que a API espera (yyyy-MM-dd).
+ *
+ * Usa os getters locais (getFullYear/getMonth/getDate) em vez de
+ * `toISOString().split('T')[0]`: o DatePicker devolve meia-noite **local**, e
+ * o toISOString converte para UTC antes de formatar. Em fuso positivo
+ * (UTC+2, por exemplo) a meia-noite de 29/07 vira 28/07T22:00Z, e a API
+ * receberia o dia anterior — o mesmo erro de `formatDate`, ao contrario.
+ */
+export function toIsoDate(date: Date): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function formatCurrency(value: number): string {
   return currencyFormatter.format(value)
 }

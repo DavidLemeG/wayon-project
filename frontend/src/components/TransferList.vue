@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import Column from 'primevue/column'
+import DataTable from 'primevue/datatable'
+import Message from 'primevue/message'
+import ProgressSpinner from 'primevue/progressspinner'
 import { listTransfers } from '../services/transferService'
 import type { TransferResponse } from '../services/transferTypes'
 import { formatCurrency, formatDate, formatPercent } from '../utils/format'
@@ -30,57 +34,78 @@ onMounted(reload)
   <section class="statement">
     <h2>Extrato de agendamentos</h2>
 
-    <p v-if="loading">Carregando...</p>
-    <p v-else-if="errorMessage" class="error">{{ errorMessage }}</p>
-    <p v-else-if="transfers.length === 0">Nenhum agendamento cadastrado ainda.</p>
+    <div v-if="loading" class="statement-loading">
+      <ProgressSpinner style="width: 2.5rem; height: 2.5rem" />
+    </div>
 
-    <table v-else>
-      <thead>
-        <tr>
-          <th>Origem</th>
-          <th>Destino</th>
-          <th>Valor</th>
-          <th>Taxa fixa</th>
-          <th>Taxa %</th>
-          <th>Taxa total</th>
-          <th>Data da transferência</th>
-          <th>Data de agendamento</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="transfer in transfers" :key="transfer.id">
-          <td>{{ transfer.originAccount }}</td>
-          <td>{{ transfer.destinationAccount }}</td>
-          <td>{{ formatCurrency(transfer.amount) }}</td>
-          <td>{{ formatCurrency(transfer.fixedFee) }}</td>
-          <td>{{ formatPercent(transfer.percentageRate) }}</td>
-          <td>{{ formatCurrency(transfer.totalFee) }}</td>
-          <td>{{ formatDate(transfer.transferDate) }}</td>
-          <td>{{ formatDate(transfer.schedulingDate) }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <Message v-else-if="errorMessage" severity="error" :closable="false">
+      {{ errorMessage }}
+    </Message>
+
+    <DataTable
+      v-else
+      :value="transfers"
+      data-key="id"
+      paginator
+      :rows="10"
+      :rows-per-page-options="[10, 25, 50]"
+      sort-field="id"
+      :sort-order="-1"
+      striped-rows
+      removable-sort
+      current-page-report-template="{first}-{last} de {totalRecords} agendamentos"
+      paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+    >
+      <template #empty>
+        <p class="statement-empty">Nenhum agendamento cadastrado ainda.</p>
+      </template>
+
+      <Column field="originAccount" header="Origem" sortable />
+      <Column field="destinationAccount" header="Destino" sortable />
+
+      <Column field="amount" header="Valor" sortable>
+        <template #body="{ data }">{{ formatCurrency(data.amount) }}</template>
+      </Column>
+
+      <Column field="fixedFee" header="Taxa fixa">
+        <template #body="{ data }">{{ formatCurrency(data.fixedFee) }}</template>
+      </Column>
+
+      <Column field="percentageRate" header="Taxa %">
+        <template #body="{ data }">{{ formatPercent(data.percentageRate) }}</template>
+      </Column>
+
+      <Column field="totalFee" header="Taxa total" sortable>
+        <template #body="{ data }">
+          <strong>{{ formatCurrency(data.totalFee) }}</strong>
+        </template>
+      </Column>
+
+      <Column field="transferDate" header="Data da transferência" sortable>
+        <template #body="{ data }">{{ formatDate(data.transferDate) }}</template>
+      </Column>
+
+      <Column field="schedulingDate" header="Data de agendamento" sortable>
+        <template #body="{ data }">{{ formatDate(data.schedulingDate) }}</template>
+      </Column>
+    </DataTable>
   </section>
 </template>
 
 <style scoped>
-table {
-  border-collapse: collapse;
-  width: 100%;
+.statement h2 {
+  margin: 0 0 1rem;
 }
 
-th,
-td {
-  border: 1px solid #e5e7eb;
-  padding: 0.5rem 0.75rem;
-  text-align: left;
+.statement-loading {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
 }
 
-th {
-  background: #f9fafb;
-}
-
-.error {
-  color: #b91c1c;
+.statement-empty {
+  text-align: center;
+  color: var(--p-text-muted-color);
+  margin: 0;
 }
 </style>

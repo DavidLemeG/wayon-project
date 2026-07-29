@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { flushPromises } from '@vue/test-utils'
+import DatePicker from 'primevue/datepicker'
+import InputNumber from 'primevue/inputnumber'
 import TransferForm from './TransferForm.vue'
+import { mountWithPrimeVue } from '../test/mountWithPrimeVue'
 import { createTransfer } from '../services/transferService'
 import type { ApiError, TransferResponse } from '../services/transferTypes'
 
@@ -10,14 +13,29 @@ vi.mock('../services/transferService', () => ({
 
 const mockedCreateTransfer = vi.mocked(createTransfer)
 
+type Wrapper = ReturnType<typeof mountWithPrimeVue>
+
+/**
+ * InputNumber e DatePicker mantem o valor internamente e so publicam via
+ * update:modelValue — escrever no <input> deles nao atualiza o v-model do
+ * formulario. Emitir o evento e a forma de simular a escolha do usuario.
+ */
 async function fillForm(
-  wrapper: ReturnType<typeof mount>,
-  values: { origin: string; destination: string; amount: string; date: string },
+  wrapper: Wrapper,
+  values: { origin: string; destination: string; amount: number; date: Date },
 ) {
   await wrapper.find('#originAccount').setValue(values.origin)
   await wrapper.find('#destinationAccount').setValue(values.destination)
-  await wrapper.find('#amount').setValue(values.amount)
-  await wrapper.find('#transferDate').setValue(values.date)
+  wrapper.findComponent(InputNumber).vm.$emit('update:modelValue', values.amount)
+  wrapper.findComponent(DatePicker).vm.$emit('update:modelValue', values.date)
+  await flushPromises()
+}
+
+const dadosValidos = {
+  origin: '1111111111',
+  destination: '2222222222',
+  amount: 1000,
+  date: new Date(2026, 6, 28),
 }
 
 function axiosError(status: number, data: ApiError) {
@@ -26,14 +44,9 @@ function axiosError(status: number, data: ApiError) {
 
 describe('TransferForm', () => {
   it('mantem o botao desabilitado enquanto a conta nao tem 10 digitos', async () => {
-    const wrapper = mount(TransferForm)
+    const wrapper = mountWithPrimeVue(TransferForm)
 
-    await fillForm(wrapper, {
-      origin: '123',
-      destination: '2222222222',
-      amount: '100',
-      date: '2026-08-12',
-    })
+    await fillForm(wrapper, { ...dadosValidos, origin: '123' })
 
     expect(wrapper.find('button[type="submit"]').attributes('disabled')).toBeDefined()
     expect(wrapper.text()).toContain('Conta de origem deve conter exatamente 10 dígitos')
@@ -55,27 +68,25 @@ describe('TransferForm', () => {
     }
     mockedCreateTransfer.mockResolvedValueOnce(created)
 
-    const wrapper = mount(TransferForm)
-    await fillForm(wrapper, {
-      origin: '1111111111',
-      destination: '2222222222',
-      amount: '1000',
-      date: '2026-07-28',
-    })
+    const wrapper = mountWithPrimeVue(TransferForm)
+    await fillForm(wrapper, dadosValidos)
 
     await wrapper.find('form').trigger('submit.prevent')
-    await wrapper.vm.$nextTick()
-    await Promise.resolve()
-    await wrapper.vm.$nextTick()
+    await flushPromises()
 
+    // A data escolhida no DatePicker (Date local) precisa chegar na API como
+    // yyyy-MM-dd do MESMO dia, sem deslocamento de fuso.
     expect(mockedCreateTransfer).toHaveBeenCalledWith({
       originAccount: '1111111111',
       destinationAccount: '2222222222',
       amount: 1000,
       transferDate: '2026-07-28',
     })
+
     expect(wrapper.text()).toContain('Transferência agendada com sucesso!')
-    // Intl usa espaco nao-quebravel (U+00A0) entre "R$" e o numero.
+    // Intl usa espaco nao-quebravel entre "R$" e o numero, escapado como
+    // \u00A0 de proposito (o caractere literal e indistinguivel de um espaco
+    // comum no editor, e o replace passa a nao fazer nada sem ninguem notar).
     const text = wrapper.text().replace(/\u00A0/g, ' ')
     expect(text).toContain('R$ 28,00')
     expect(text).toContain('2,50%')
@@ -93,17 +104,11 @@ describe('TransferForm', () => {
       }),
     )
 
-    const wrapper = mount(TransferForm)
-    await fillForm(wrapper, {
-      origin: '1111111111',
-      destination: '2222222222',
-      amount: '1000',
-      date: '2026-07-28',
-    })
+    const wrapper = mountWithPrimeVue(TransferForm)
+    await fillForm(wrapper, dadosValidos)
 
     await wrapper.find('form').trigger('submit.prevent')
-    await Promise.resolve()
-    await wrapper.vm.$nextTick()
+    await flushPromises()
 
     expect(wrapper.text()).toContain('máximo 2 casas decimais')
   })
@@ -120,17 +125,11 @@ describe('TransferForm', () => {
       }),
     )
 
-    const wrapper = mount(TransferForm)
-    await fillForm(wrapper, {
-      origin: '1111111111',
-      destination: '2222222222',
-      amount: '1000',
-      date: '2026-07-28',
-    })
+    const wrapper = mountWithPrimeVue(TransferForm)
+    await fillForm(wrapper, dadosValidos)
 
     await wrapper.find('form').trigger('submit.prevent')
-    await Promise.resolve()
-    await wrapper.vm.$nextTick()
+    await flushPromises()
 
     expect(wrapper.text()).toContain('não pode ser a mesma que a conta de origem')
   })

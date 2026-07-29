@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
-import { flushPromises, mount } from '@vue/test-utils'
+import { flushPromises } from '@vue/test-utils'
 import TransferList from './TransferList.vue'
+import { mountWithPrimeVue } from '../test/mountWithPrimeVue'
 import { listTransfers } from '../services/transferService'
 import type { TransferResponse } from '../services/transferTypes'
 
@@ -27,7 +28,7 @@ describe('TransferList', () => {
   it('renderiza uma linha por agendamento retornado pelo servico', async () => {
     mockedListTransfers.mockResolvedValueOnce([sampleTransfer])
 
-    const wrapper = mount(TransferList)
+    const wrapper = mountWithPrimeVue(TransferList)
     await flushPromises()
 
     // Intl usa espaco nao-quebravel entre "R$" e o numero. Escapado como
@@ -44,7 +45,7 @@ describe('TransferList', () => {
   it('exibe as datas no formato brasileiro', async () => {
     mockedListTransfers.mockResolvedValueOnce([sampleTransfer])
 
-    const wrapper = mount(TransferList)
+    const wrapper = mountWithPrimeVue(TransferList)
     await flushPromises()
 
     const row = wrapper.find('tbody tr')
@@ -56,17 +57,19 @@ describe('TransferList', () => {
   it('mostra mensagem de vazio quando nao ha agendamentos', async () => {
     mockedListTransfers.mockResolvedValueOnce([])
 
-    const wrapper = mount(TransferList)
+    const wrapper = mountWithPrimeVue(TransferList)
     await flushPromises()
 
     expect(wrapper.text()).toContain('Nenhum agendamento cadastrado ainda.')
-    expect(wrapper.find('table').exists()).toBe(false)
+    // O DataTable sempre renderiza o <table> (a mensagem de vazio vai dentro
+    // dele), entao o que importa e nao haver nenhuma linha de dado.
+    expect(wrapper.findAll('tbody tr td').some((cell) => /^\d{10}$/.test(cell.text()))).toBe(false)
   })
 
   it('mostra mensagem de erro quando a API falha', async () => {
     mockedListTransfers.mockRejectedValueOnce(new Error('network error'))
 
-    const wrapper = mount(TransferList)
+    const wrapper = mountWithPrimeVue(TransferList)
     await flushPromises()
 
     expect(wrapper.text()).toContain('Não foi possível carregar o extrato')

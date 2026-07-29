@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatCurrency, formatDate, formatPercent } from './format'
+import { formatCurrency, formatDate, formatPercent, toIsoDate } from './format'
 
 // Intl usa espaco nao-quebravel (U+00A0) entre "R$" e o numero.
 const normalize = (text: string) => text.replace(/\u00A0/g, ' ')
@@ -18,6 +18,30 @@ describe('formatDate', () => {
     expect(formatDate('2026-01-01')).toBe('01/01/2026')
     expect(formatDate('2026-03-01')).toBe('01/03/2026')
     expect(formatDate('2026-12-31')).toBe('31/12/2026')
+  })
+})
+
+describe('toIsoDate', () => {
+  it('converte o Date do DatePicker para o formato da API', () => {
+    expect(toIsoDate(new Date(2026, 6, 29))).toBe('2026-07-29')
+  })
+
+  it('preenche mes e dia com zero a esquerda', () => {
+    expect(toIsoDate(new Date(2026, 0, 5))).toBe('2026-01-05')
+  })
+
+  /**
+   * Regressao (espelho do caso de formatDate): `toISOString()` converte para
+   * UTC antes de formatar, entao a meia-noite local de 29/07 em fuso positivo
+   * viraria 28/07T22:00Z e a API receberia o dia anterior. Usar os getters
+   * locais mantem o dia escolhido pelo usuario, em qualquer fuso.
+   */
+  it('preserva o dia escolhido, sem conversao para UTC', () => {
+    const escolhido = new Date(2026, 6, 29, 0, 0, 0)
+    expect(toIsoDate(escolhido)).toBe('2026-07-29')
+    expect(toIsoDate(escolhido)).toBe(
+      `${escolhido.getFullYear()}-07-${String(escolhido.getDate()).padStart(2, '0')}`,
+    )
   })
 })
 

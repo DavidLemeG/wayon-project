@@ -1,9 +1,15 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import axios from 'axios'
+import Button from 'primevue/button'
+import Card from 'primevue/card'
+import DatePicker from 'primevue/datepicker'
+import InputNumber from 'primevue/inputnumber'
+import InputText from 'primevue/inputtext'
+import Message from 'primevue/message'
 import { createTransfer } from '../services/transferService'
 import type { ApiError, TransferResponse } from '../services/transferTypes'
-import { formatCurrency, formatPercent } from '../utils/format'
+import { formatCurrency, formatPercent, toIsoDate } from '../utils/format'
 
 const emit = defineEmits<{
   created: [transfer: TransferResponse]
@@ -12,8 +18,8 @@ const emit = defineEmits<{
 const form = reactive({
   originAccount: '',
   destinationAccount: '',
-  amount: '',
-  transferDate: '',
+  amount: null as number | null,
+  transferDate: null as Date | null,
 })
 
 const submitting = ref(false)
@@ -23,31 +29,26 @@ const lastCreated = ref<TransferResponse | null>(null)
 
 const accountPattern = /^\d{10}$/
 
-const clientErrors = computed(() => {
-  const errors: string[] = []
+const originError = computed(() =>
+  form.originAccount && !accountPattern.test(form.originAccount)
+    ? 'Conta de origem deve conter exatamente 10 dígitos'
+    : null,
+)
 
-  if (form.originAccount && !accountPattern.test(form.originAccount)) {
-    errors.push('Conta de origem deve conter exatamente 10 dígitos')
-  }
-  if (form.destinationAccount && !accountPattern.test(form.destinationAccount)) {
-    errors.push('Conta de destino deve conter exatamente 10 dígitos')
-  }
-  if (form.amount !== '' && Number(form.amount) <= 0) {
-    errors.push('Valor da transferência deve ser maior que zero')
-  }
+const destinationError = computed(() =>
+  form.destinationAccount && !accountPattern.test(form.destinationAccount)
+    ? 'Conta de destino deve conter exatamente 10 dígitos'
+    : null,
+)
 
-  return errors
-})
-
-const isFormValid = computed(() => {
-  return (
+const isFormValid = computed(
+  () =>
     accountPattern.test(form.originAccount) &&
     accountPattern.test(form.destinationAccount) &&
-    Number(form.amount) > 0 &&
-    form.transferDate !== '' &&
-    clientErrors.value.length === 0
-  )
-})
+    form.amount !== null &&
+    form.amount > 0 &&
+    form.transferDate !== null,
+)
 
 async function handleSubmit() {
   if (!isFormValid.value) {
@@ -63,8 +64,8 @@ async function handleSubmit() {
     const created = await createTransfer({
       originAccount: form.originAccount,
       destinationAccount: form.destinationAccount,
-      amount: Number(form.amount),
-      transferDate: form.transferDate,
+      amount: form.amount as number,
+      transferDate: toIsoDate(form.transferDate as Date),
     })
 
     lastCreated.value = created
@@ -98,117 +99,134 @@ function handleError(error: unknown) {
 function resetForm() {
   form.originAccount = ''
   form.destinationAccount = ''
-  form.amount = ''
-  form.transferDate = ''
+  form.amount = null
+  form.transferDate = null
 }
 </script>
 
 <template>
-  <form class="transfer-form" @submit.prevent="handleSubmit">
-    <h2>Agendar transferência</h2>
+  <Card class="transfer-form-card">
+    <template #title>Agendar transferência</template>
 
-    <div class="field">
-      <label for="originAccount">Conta de origem</label>
-      <input
-        id="originAccount"
-        v-model="form.originAccount"
-        type="text"
-        placeholder="XXXXXXXXXX"
-        maxlength="10"
-        inputmode="numeric"
-      />
-    </div>
+    <template #content>
+      <form class="transfer-form" @submit.prevent="handleSubmit">
+        <div class="field">
+          <label for="originAccount">Conta de origem</label>
+          <InputText
+            id="originAccount"
+            v-model="form.originAccount"
+            placeholder="XXXXXXXXXX"
+            maxlength="10"
+            inputmode="numeric"
+            :invalid="!!originError"
+            fluid
+          />
+          <small v-if="originError" class="field-error">{{ originError }}</small>
+        </div>
 
-    <div class="field">
-      <label for="destinationAccount">Conta de destino</label>
-      <input
-        id="destinationAccount"
-        v-model="form.destinationAccount"
-        type="text"
-        placeholder="XXXXXXXXXX"
-        maxlength="10"
-        inputmode="numeric"
-      />
-    </div>
+        <div class="field">
+          <label for="destinationAccount">Conta de destino</label>
+          <InputText
+            id="destinationAccount"
+            v-model="form.destinationAccount"
+            placeholder="XXXXXXXXXX"
+            maxlength="10"
+            inputmode="numeric"
+            :invalid="!!destinationError"
+            fluid
+          />
+          <small v-if="destinationError" class="field-error">{{ destinationError }}</small>
+        </div>
 
-    <div class="field">
-      <label for="amount">Valor (R$)</label>
-      <input id="amount" v-model="form.amount" type="number" min="0.01" step="0.01" />
-    </div>
+        <div class="field">
+          <label for="amount">Valor da transferência</label>
+          <!-- inputId, nao id: InputNumber/DatePicker sao wrappers, e "id" fica
+               no elemento externo. Sem inputId o <label for> aponta para um id
+               inexistente e a associacao rotulo/campo quebra. -->
+          <InputNumber
+            input-id="amount"
+            v-model="form.amount"
+            mode="currency"
+            currency="BRL"
+            locale="pt-BR"
+            :min="0"
+            placeholder="R$ 0,00"
+            fluid
+          />
+        </div>
 
-    <div class="field">
-      <label for="transferDate">Data da transferência</label>
-      <input id="transferDate" v-model="form.transferDate" type="date" />
-    </div>
+        <div class="field">
+          <label for="transferDate">Data da transferência</label>
+          <DatePicker
+            input-id="transferDate"
+            v-model="form.transferDate"
+            date-format="dd/mm/yy"
+            show-icon
+            fluid
+          />
+        </div>
 
-    <ul v-if="clientErrors.length" class="errors">
-      <li v-for="error in clientErrors" :key="error">{{ error }}</li>
-    </ul>
+        <Button
+          type="submit"
+          :label="submitting ? 'Agendando...' : 'Agendar transferência'"
+          icon="pi pi-check"
+          :disabled="!isFormValid || submitting"
+          :loading="submitting"
+        />
 
-    <button type="submit" :disabled="!isFormValid || submitting">
-      {{ submitting ? 'Agendando...' : 'Agendar transferência' }}
-    </button>
+        <Message v-if="errorMessage" severity="error" :closable="false">
+          <p class="alert-title">{{ errorMessage }}</p>
+          <ul v-if="fieldErrors.length" class="alert-list">
+            <li v-for="error in fieldErrors" :key="error">{{ error }}</li>
+          </ul>
+        </Message>
 
-    <div v-if="errorMessage" class="alert alert-error">
-      <p>{{ errorMessage }}</p>
-      <ul v-if="fieldErrors.length">
-        <li v-for="error in fieldErrors" :key="error">{{ error }}</li>
-      </ul>
-    </div>
-
-    <div v-if="lastCreated" class="alert alert-success">
-      <p>Transferência agendada com sucesso!</p>
-      <p>
-        Taxa: {{ formatCurrency(lastCreated.fixedFee) }} fixa +
-        {{ formatPercent(lastCreated.percentageRate) }} =
-        <strong>{{ formatCurrency(lastCreated.totalFee) }}</strong>
-      </p>
-    </div>
-  </form>
+        <Message v-if="lastCreated" severity="success" :closable="false">
+          <p class="alert-title">Transferência agendada com sucesso!</p>
+          <p>
+            Taxa: {{ formatCurrency(lastCreated.fixedFee) }} fixa +
+            {{ formatPercent(lastCreated.percentageRate) }} =
+            <strong>{{ formatCurrency(lastCreated.totalFee) }}</strong>
+          </p>
+        </Message>
+      </form>
+    </template>
+  </Card>
 </template>
 
 <style scoped>
+.transfer-form-card {
+  max-width: 30rem;
+}
+
 .transfer-form {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 24rem;
+  gap: 1.25rem;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.375rem;
 }
 
-.errors,
-.alert ul {
+.field label {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.field-error {
+  color: var(--p-red-500);
+}
+
+.alert-title {
   margin: 0;
+  font-weight: 600;
+}
+
+.alert-list {
+  margin: 0.5rem 0 0;
   padding-left: 1.25rem;
-  color: #b91c1c;
-}
-
-.alert {
-  padding: 0.75rem;
-  border-radius: 0.375rem;
-}
-
-.alert-error {
-  background: #fef2f2;
-  color: #b91c1c;
-}
-
-.alert-success {
-  background: #f0fdf4;
-  color: #15803d;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
 }
 </style>
