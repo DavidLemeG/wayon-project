@@ -280,6 +280,5 @@ Para inspecionar o SQL gerado durante o desenvolvimento:
 - ✅ Persistência em banco em memória (H2).
 - ✅ Histórico de commits granular (`feat`/`fix`/`test`/`docs`/`refactor`
   separados por decisão).
-- ⬜ Repositório público no GitHub — repo local pronto, falta criar o
-  remoto e dar push (ver próximos passos).
+- ✅ Repositório público no GitHub.
 - ✅ README com decisões arquiteturais, versões e instruções de subida.
