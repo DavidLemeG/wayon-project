@@ -25,6 +25,21 @@ spring:
 server:
   port: 8080
 
+logging:
+  # Sem isso o log sai com acento corrompido ("n?o pode", "d?gitos") em
+  # ambiente cujo charset default nao e UTF-8 (Windows/Cp1252, por exemplo):
+  # as mensagens sao em portugues, o encoder precisa acompanhar.
+  charset:
+    console: UTF-8
+  level:
+    # Log de negocio da aplicacao (requisicao recebida, taxa calculada,
+    # agendamento criado, rejeicoes). Numeros de conta saem mascarados —
+    # ver AccountMasker e ADR 0011.
+    com.wayon.transferscheduling: INFO
+    # Para inspecionar o SQL gerado durante o desenvolvimento, suba com:
+    # --logging.level.org.hibernate.SQL=DEBUG
+    org.hibernate.SQL: INFO
+
 app:
   # Padroes de origem autorizados a chamar a API pelo navegador. Qualquer
   # porta em localhost (5173 e a padrao do dev server do Vite, mas o Vite

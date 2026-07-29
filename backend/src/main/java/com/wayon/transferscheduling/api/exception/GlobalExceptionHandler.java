@@ -28,6 +28,8 @@ public class GlobalExceptionHandler {
                 .map(this::formatFieldError)
                 .collect(Collectors.toList());
 
+        log.warn("400 em {}: campos invalidos {}", request.getRequestURI(), fieldErrors);
+
         ApiError apiError = apiError(HttpStatus.BAD_REQUEST,
                 "Erro de validação nos campos enviados.", request)
                 .fieldErrors(fieldErrors)
@@ -39,6 +41,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TransferValidationException.class)
     public ResponseEntity<ApiError> handleTransferValidation(TransferValidationException ex,
                                                                HttpServletRequest request) {
+        // WARN, nao ERROR: e uma rejeicao esperada por regra de negocio, o sistema
+        // funcionou como deveria. Mas fica visivel no log para investigar um pico
+        // de rejeicoes (ex.: front enviando data em formato errado).
+        log.warn("422 em {}: {}", request.getRequestURI(), ex.getMessage());
+
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(apiError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), request).build());
     }
@@ -51,6 +58,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiError> handleUnreadableBody(HttpMessageNotReadableException ex,
                                                            HttpServletRequest request) {
+        // Loga a causa tecnica (util para depurar o cliente), mas nao devolve ela
+        // na resposta — detalhe interno de parsing nao ajuda quem chama a API.
+        log.warn("400 em {}: corpo malformado — {}", request.getRequestURI(),
+                ex.getMostSpecificCause().getMessage());
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(apiError(HttpStatus.BAD_REQUEST,
                         "Corpo da requisição inválido: verifique o formato do JSON e dos campos enviados "
