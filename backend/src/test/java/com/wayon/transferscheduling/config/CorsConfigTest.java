@@ -12,8 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * O front-end (Vite, porta 5173) chama a API de outra origem, entao o navegador
- * dispara um preflight OPTIONS antes do POST. Sem CORS liberado, a chamada e
+ * O front-end (Vite) chama a API de outra origem, entao o navegador dispara
+ * um preflight OPTIONS antes do POST. Sem CORS liberado, a chamada e
  * bloqueada no navegador mesmo com a API respondendo normalmente.
  *
  * <p>Usa MockMvc, e nao TestRestTemplate, de proposito: o TestRestTemplate usa
@@ -29,18 +29,33 @@ class CorsConfigTest {
     private MockMvc mockMvc;
 
     @Test
-    void preflightDaOrigemDoFrontEndEAutorizado() throws Exception {
+    void preflightDaPortaPadraoDoViteEAutorizado() throws Exception {
+        assertPreflightAutorizado("http://localhost:5173");
+    }
+
+    /**
+     * O Vite incrementa a porta (5174, 5175...) quando 5173 ja esta em uso —
+     * acontece na pratica sempre que sobra um processo `node` de uma sessao
+     * anterior. allowedOriginPatterns("http://localhost:*") cobre isso sem
+     * precisar listar cada porta.
+     */
+    @Test
+    void preflightDeOutraPortaEmLocalhostTambemEAutorizado() throws Exception {
+        assertPreflightAutorizado("http://localhost:5174");
+    }
+
+    private void assertPreflightAutorizado(String origin) throws Exception {
         mockMvc.perform(options("/api/transfers")
-                        .header("Origin", "http://localhost:5173")
+                        .header("Origin", origin)
                         .header("Access-Control-Request-Method", "POST")
                         .header("Access-Control-Request-Headers", "Content-Type"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Access-Control-Allow-Origin", "http://localhost:5173"))
+                .andExpect(header().string("Access-Control-Allow-Origin", origin))
                 .andExpect(header().string("Access-Control-Allow-Methods", "GET,POST"));
     }
 
     @Test
-    void preflightDeOrigemNaoAutorizadaERecusado() throws Exception {
+    void preflightDeOrigemForaDeLocalhostERecusado() throws Exception {
         mockMvc.perform(options("/api/transfers")
                         .header("Origin", "http://site-nao-autorizado.com")
                         .header("Access-Control-Request-Method", "POST"))

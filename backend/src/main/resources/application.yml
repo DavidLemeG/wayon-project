@@ -26,10 +26,12 @@ server:
   port: 8080
 
 app:
-  # Origens autorizadas a chamar a API pelo navegador. 5173 e a porta padrao do
-  # dev server do Vite (front-end Vue); 4173 e a do "vite preview" (build local).
+  # Padroes de origem autorizados a chamar a API pelo navegador. Qualquer
+  # porta em localhost (5173 e a padrao do dev server do Vite, mas o Vite
+  # incrementa a porta se 5173 ja estiver em uso) - continua restrito a
+  # localhost, nao abre para a internet. Ver CorsConfig.
   cors:
-    allowed-origins: http://localhost:5173,http://localhost:4173
+    allowed-origin-patterns: http://localhost:*
   scheduling:
     # Fuso usado para determinar "hoje" ao registrar a data de agendamento.
     time-zone: America/Sao_Paulo
