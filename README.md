@@ -67,7 +67,7 @@ frontend/src/
 
 - **Backend:** Java 11 + Spring Boot 2.7.18 + Maven (`mvnw`)
 - **Persistência:** H2 em memória + Spring Data JPA
-- **Frontend:** Vue 3 (Composition API) + TypeScript + Vite + axios + vue-router 4
+- **Frontend:** Vue 3 (Composition API) + TypeScript + Vite + PrimeVue 4 (tema Aura) + axios + vue-router 4
 - **Testes:** JUnit 5, Mockito, AssertJ, MockMvc, `@SpringBootTest` (backend) · Vitest + Vue Test Utils (frontend)
 
 Justificativas completas de cada escolha nos [ADRs](docs/adr/).
@@ -135,12 +135,13 @@ cd frontend
 npm run test
 ```
 
-13 testes (Vitest + Vue Test Utils): validação client-side do
+16 testes (Vitest + Vue Test Utils): validação client-side do
 formulário, sucesso com breakdown da taxa exibido, tratamento
 diferenciado de erro 400 (campo inválido) e 422 (regra de negócio), a
 listagem do extrato (com estado vazio e de erro) e a formatação
-brasileira de datas/valores (`format.spec.ts`, incluindo regressão para
-o deslocamento de fuso ao converter a data ISO da API).
+brasileira de datas/valores (`format.spec.ts`, com regressão nos **dois
+sentidos** da conversão de data: da API para a tela e da tela para a
+API, que são armadilhas de fuso espelhadas).
 
 ### Testando a API manualmente
 
@@ -171,6 +172,7 @@ decisão, consequências e alternativas consideradas para cada uma:
 9. [CORS configurável no backend](docs/adr/0009-cors-configuravel.md)
 10. [Vue 3 + TypeScript + Vite](docs/adr/0010-vue3-typescript-vite.md)
 11. [Logging de negócio com mascaramento de contas](docs/adr/0011-logging-mascaramento.md)
+12. [PrimeVue 4 (MIT) como biblioteca de componentes](docs/adr/0012-primevue-ui.md)
 
 ## Observabilidade
 

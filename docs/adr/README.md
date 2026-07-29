@@ -16,3 +16,4 @@ Registro das decisões técnicas relevantes do projeto, formato
 | [0009](0009-cors-configuravel.md) | CORS configurável no backend (vs proxy no dev server) |
 | [0010](0010-vue3-typescript-vite.md) | Vue 3 + TypeScript + Vite |
 | [0011](0011-logging-mascaramento.md) | Logging de negócio com mascaramento de contas |
+| [0012](0012-primevue-ui.md) | PrimeVue 4 (MIT) como biblioteca de componentes |
