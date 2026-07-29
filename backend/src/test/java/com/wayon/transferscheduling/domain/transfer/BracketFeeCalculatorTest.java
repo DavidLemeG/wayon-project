@@ -47,8 +47,13 @@ class BracketFeeCalculatorTest {
     void rejeitaTransferenciaAlemDe50Dias(long dias) {
         LocalDate transferDate = SCHEDULING_DATE.plusDays(dias);
 
+        // Mensagem precisa falar em "antecedencia" (dias para frente), nunca em
+        // "passado" - sao cenarios de rejeicao diferentes e a mensagem errada
+        // confunde o usuario (ver historico: bug encontrado testando no navegador).
         assertThatThrownBy(() -> calculator.calculate(SCHEDULING_DATE, transferDate, AMOUNT))
-                .isInstanceOf(InvalidTransferDateException.class);
+                .isInstanceOf(InvalidTransferDateException.class)
+                .hasMessageContaining(dias + " dia(s) de antecedência")
+                .hasMessageNotContaining("passado");
     }
 
     @ParameterizedTest(name = "data de transferencia no passado ({0} dia(s) antes) deve ser rejeitada")
@@ -56,8 +61,13 @@ class BracketFeeCalculatorTest {
     void rejeitaDataDeTransferenciaNoPassado(long diasNoPassado) {
         LocalDate transferDate = SCHEDULING_DATE.minusDays(diasNoPassado);
 
+        // Mensagem precisa falar em "passado" com os dias em modulo (nao "-5
+        // dia(s) de antecedencia", que nao faz sentido nenhum para o usuario).
         assertThatThrownBy(() -> calculator.calculate(SCHEDULING_DATE, transferDate, AMOUNT))
-                .isInstanceOf(InvalidTransferDateException.class);
+                .isInstanceOf(InvalidTransferDateException.class)
+                .hasMessageContaining("não pode estar no passado")
+                .hasMessageContaining(diasNoPassado + " dia(s) antes de hoje")
+                .hasMessageNotContaining("-" + diasNoPassado);
     }
 
 }
