@@ -24,3 +24,12 @@ spring:
 
 server:
   port: 8080
+
+app:
+  # Origens autorizadas a chamar a API pelo navegador. 5173 e a porta padrao do
+  # dev server do Vite (front-end Vue); 4173 e a do "vite preview" (build local).
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:4173
+  scheduling:
+    # Fuso usado para determinar "hoje" ao registrar a data de agendamento.
+    time-zone: America/Sao_Paulo
