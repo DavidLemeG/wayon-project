@@ -14,3 +14,4 @@ Registro das decisões técnicas relevantes do projeto, formato
 | [0007](0007-package-by-feature.md) | Package by feature |
 | [0008](0008-bloqueio-auto-transferencia.md) | Bloqueio de autotransferência (origem == destino) |
 | [0009](0009-cors-configuravel.md) | CORS configurável no backend (vs proxy no dev server) |
+| [0010](0010-vue3-typescript-vite.md) | Vue 3 + TypeScript + Vite |
