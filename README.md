@@ -100,9 +100,12 @@ npm start
 ```
 
 A aplicação sobe em `http://localhost:5173` (`npm run dev` faz o mesmo).
-O backend precisa estar no ar antes (o front consome
-`http://localhost:8080` por padrão, configurável em
-`frontend/.env.development`).
+O backend precisa estar no ar antes.
+
+A URL da API vem da variável `VITE_API_BASE_URL` (definida em
+`frontend/.env.development`, com `http://localhost:8080` como padrão no
+código). Para servir o front de outro host, basta defini-la no ambiente
+onde o build é gerado — não há URL fixa no código de aplicação.
 
 CORS já vem liberado para `localhost:5173`/`localhost:4173` por padrão
 (ver [ADR 0009](docs/adr/0009-cors-configuravel.md)) — não é preciso
