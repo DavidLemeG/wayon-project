@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import axios from 'axios'
 import Button from 'primevue/button'
 import Card from 'primevue/card'
@@ -10,10 +10,6 @@ import Message from 'primevue/message'
 import { createTransfer } from '../services/transferService'
 import type { ApiError, TransferResponse } from '../services/transferTypes'
 import { formatCurrency, formatPercent, toIsoDate } from '../utils/format'
-
-const emit = defineEmits<{
-  created: [transfer: TransferResponse]
-}>()
 
 const form = reactive({
   originAccount: '',
@@ -41,17 +37,42 @@ const destinationError = computed(() =>
     : null,
 )
 
+/**
+ * A regra tambem existe no servidor (422, ver ADR 0008), que continua sendo a
+ * fonte da verdade. Aqui e so para o usuario nao preencher o formulario
+ * inteiro e so descobrir o problema depois de enviar.
+ */
+const sameAccountError = computed(() =>
+  form.originAccount && form.originAccount === form.destinationAccount
+    ? 'A conta de destino não pode ser a mesma que a conta de origem'
+    : null,
+)
+
 const isFormValid = computed(
   () =>
     accountPattern.test(form.originAccount) &&
     accountPattern.test(form.destinationAccount) &&
+    sameAccountError.value === null &&
     form.amount !== null &&
     form.amount > 0 &&
     form.transferDate !== null,
 )
 
+// Mensagem de erro do envio anterior nao deve continuar na tela enquanto o
+// usuario corrige os campos.
+watch(
+  () => [form.originAccount, form.destinationAccount, form.amount, form.transferDate],
+  () => {
+    errorMessage.value = null
+    fieldErrors.value = []
+  },
+)
+
 async function handleSubmit() {
-  if (!isFormValid.value) {
+  // A guarda de submitting nao e redundante com o :disabled do botao: o
+  // backend nao tem idempotencia, entao um envio duplicado criaria dois
+  // agendamentos reais, com duas taxas cobradas.
+  if (!isFormValid.value || submitting.value) {
     return
   }
 
@@ -68,9 +89,8 @@ async function handleSubmit() {
       transferDate: toIsoDate(form.transferDate as Date),
     })
 
-    lastCreated.value = created
-    emit('created', created)
     resetForm()
+    lastCreated.value = created
   } catch (error) {
     handleError(error)
   } finally {
@@ -132,10 +152,11 @@ function resetForm() {
             placeholder="XXXXXXXXXX"
             maxlength="10"
             inputmode="numeric"
-            :invalid="!!destinationError"
+            :invalid="!!destinationError || !!sameAccountError"
             fluid
           />
           <small v-if="destinationError" class="field-error">{{ destinationError }}</small>
+          <small v-else-if="sameAccountError" class="field-error">{{ sameAccountError }}</small>
         </div>
 
         <div class="field">

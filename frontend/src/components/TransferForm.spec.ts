@@ -42,6 +42,21 @@ function axiosError(status: number, data: ApiError) {
   return { isAxiosError: true, response: { status, data } }
 }
 
+function transferResponseFixture(): TransferResponse {
+  return {
+    id: 1,
+    originAccount: '1111111111',
+    destinationAccount: '2222222222',
+    amount: 1000,
+    fixedFee: 3,
+    percentageRate: 0.025,
+    percentageFee: 25,
+    totalFee: 28,
+    transferDate: '2026-07-28',
+    schedulingDate: '2026-07-28',
+  }
+}
+
 describe('TransferForm', () => {
   it('mantem o botao desabilitado enquanto a conta nao tem 10 digitos', async () => {
     const wrapper = mountWithPrimeVue(TransferForm)
@@ -51,6 +66,65 @@ describe('TransferForm', () => {
     expect(wrapper.find('button[type="submit"]').attributes('disabled')).toBeDefined()
     expect(wrapper.text()).toContain('Conta de origem deve conter exatamente 10 dígitos')
     expect(mockedCreateTransfer).not.toHaveBeenCalled()
+  })
+
+  it('bloqueia conta de destino igual a de origem antes de enviar', async () => {
+    const wrapper = mountWithPrimeVue(TransferForm)
+
+    await fillForm(wrapper, { ...dadosValidos, destination: dadosValidos.origin })
+
+    expect(wrapper.text()).toContain('não pode ser a mesma que a conta de origem')
+    expect(wrapper.find('button[type="submit"]').attributes('disabled')).toBeDefined()
+    // A regra tambem existe no servidor (422); aqui e so para o usuario nao
+    // preencher tudo e so descobrir depois de enviar.
+    expect(mockedCreateTransfer).not.toHaveBeenCalled()
+  })
+
+  it('nao envia duas vezes enquanto a primeira requisicao esta em andamento', async () => {
+    // O backend nao tem idempotencia: um envio duplicado criaria dois
+    // agendamentos reais, com duas taxas cobradas.
+    let resolveRequest: (value: TransferResponse) => void = () => {}
+    mockedCreateTransfer.mockReturnValueOnce(
+      new Promise<TransferResponse>((resolve) => {
+        resolveRequest = resolve
+      }),
+    )
+
+    const wrapper = mountWithPrimeVue(TransferForm)
+    await fillForm(wrapper, dadosValidos)
+
+    await wrapper.find('form').trigger('submit.prevent')
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(mockedCreateTransfer).toHaveBeenCalledTimes(1)
+
+    resolveRequest(transferResponseFixture())
+    await flushPromises()
+  })
+
+  it('limpa a mensagem de erro quando o usuario corrige um campo', async () => {
+    mockedCreateTransfer.mockRejectedValueOnce(
+      axiosError(422, {
+        timestamp: '2026-07-28T00:00:00Z',
+        status: 422,
+        error: 'Unprocessable Entity',
+        message: 'Não há taxa aplicável para essa data.',
+        path: '/api/transfers',
+        fieldErrors: null,
+      }),
+    )
+
+    const wrapper = mountWithPrimeVue(TransferForm)
+    await fillForm(wrapper, dadosValidos)
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Não há taxa aplicável')
+
+    await wrapper.find('#originAccount').setValue('9999999999')
+    await flushPromises()
+
+    expect(wrapper.text()).not.toContain('Não há taxa aplicável')
   })
 
   it('submete e mostra o breakdown da taxa em caso de sucesso', async () => {
