@@ -17,6 +17,14 @@ const router = createRouter({
       name: 'extrato',
       component: () => import('../views/StatementView.vue'),
     },
+    {
+      // Sem esta rota, um caminho inexistente renderiza a area de conteudo
+      // vazia: o menu aparece, o conteudo some, e o usuario nao sabe se a
+      // pagina nao existe ou se a aplicacao travou.
+      path: '/:pathMatch(.*)*',
+      name: 'nao-encontrado',
+      component: () => import('../views/NotFoundView.vue'),
+    },
   ],
 })
 
