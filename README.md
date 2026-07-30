@@ -58,9 +58,10 @@ com.wayon.transferscheduling/
 ```
 frontend/src/
   services/    api.ts (axios), transferService.ts, transferTypes.ts (espelha os DTOs do backend)
-  router/      duas rotas: /agendar e /extrato
+  utils/       format.ts (datas e valores em pt-BR)
+  router/      /agendar, /extrato e rota coringa para caminho inexistente
   components/  TransferForm.vue, TransferList.vue (+ specs Vitest)
-  views/       ScheduleTransferView.vue, StatementView.vue (views finas)
+  views/       ScheduleTransferView.vue, StatementView.vue, NotFoundView.vue
 ```
 
 ## Stack
@@ -140,13 +141,15 @@ cd frontend
 npm run test
 ```
 
-16 testes (Vitest + Vue Test Utils): validação client-side do
-formulário, sucesso com breakdown da taxa exibido, tratamento
-diferenciado de erro 400 (campo inválido) e 422 (regra de negócio), a
-listagem do extrato (com estado vazio e de erro) e a formatação
-brasileira de datas/valores (`format.spec.ts`, com regressão nos **dois
-sentidos** da conversão de data: da API para a tela e da tela para a
-API, que são armadilhas de fuso espelhadas).
+19 testes (Vitest + Vue Test Utils): validação client-side do
+formulário (formato da conta e origem igual ao destino), bloqueio de
+envio duplicado enquanto a requisição está em andamento, limpeza da
+mensagem de erro ao corrigir um campo, sucesso com breakdown da taxa
+exibido, tratamento diferenciado de erro 400 (campo inválido) e 422
+(regra de negócio), a listagem do extrato (com estado vazio e de erro) e
+a formatação brasileira de datas/valores (`format.spec.ts`, com
+regressão nos **dois sentidos** da conversão de data: da API para a tela
+e da tela para a API, que são armadilhas de fuso espelhadas).
 
 ### Testando a API manualmente
 
