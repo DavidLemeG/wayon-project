@@ -40,6 +40,9 @@ class BracketFeeCalculatorTest {
         assertThat(fee.getFixedFee()).isEqualByComparingTo(taxaFixaEsperada);
         assertThat(fee.getPercentageRate()).isEqualByComparingTo(taxaPercentualEsperada);
         assertThat(fee.getTotalFee()).isEqualByComparingTo(totalEsperado);
+        // O resultado carrega os dias usados, para quem chama nao ter que
+        // recalcular (e duplicar a regra de contagem fora do calculador).
+        assertThat(fee.getDaysBetween()).isEqualTo(dias);
     }
 
     @ParameterizedTest(name = "dia {0} deve ser rejeitado por estar fora da janela 0-50")

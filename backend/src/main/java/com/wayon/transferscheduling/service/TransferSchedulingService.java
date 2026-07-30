@@ -10,12 +10,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class TransferSchedulingService {
@@ -37,7 +39,10 @@ public class TransferSchedulingService {
     @Transactional
     public TransferSchedule schedule(String originAccount, String destinationAccount,
                                       BigDecimal amount, LocalDate transferDate) {
-        if (originAccount.equals(destinationAccount)) {
+        // Objects.equals, nao originAccount.equals: o @NotBlank do DTO protege o
+        // caminho HTTP, mas o servico e API publica e nao deve quebrar com NPE
+        // se for chamado direto (de um teste ou de outro ponto do sistema).
+        if (Objects.equals(originAccount, destinationAccount)) {
             log.warn("Agendamento recusado: conta de origem e destino sao a mesma (conta={})",
                     AccountMasker.mask(originAccount));
             throw new SameAccountTransferException();
@@ -58,7 +63,7 @@ public class TransferSchedulingService {
 
         log.info("Taxa calculada: {} dia(s) entre agendamento e transferencia -> "
                         + "taxa fixa R$ {} + aliquota {}% (R$ {}) = total R$ {}",
-                ChronoUnit.DAYS.between(schedulingDate, transferDate),
+                fee.getDaysBetween(),
                 fee.getFixedFee(),
                 fee.getPercentageRate().multiply(BigDecimal.valueOf(100)).stripTrailingZeros().toPlainString(),
                 fee.getPercentageFee(),
@@ -78,6 +83,39 @@ public class TransferSchedulingService {
 
         TransferSchedule saved = repository.save(transferSchedule);
 
+        logAfterCommit(saved);
+
+        return saved;
+    }
+
+    @Transactional(readOnly = true)
+    public List<TransferSchedule> listAll() {
+        return repository.findAllByOrderBySchedulingDateDescIdDesc();
+    }
+
+    /**
+     * Registra o agendamento como criado somente apos o commit.
+     *
+     * <p>Logar direto apos o save() afirmaria "criado" ainda dentro da
+     * transacao: se o commit falhasse depois, o log declararia um agendamento
+     * que nunca chegou ao banco. Num extrato financeiro, log que mente sobre o
+     * que foi persistido atrapalha mais do que ajuda numa investigacao.
+     */
+    private void logAfterCommit(TransferSchedule saved) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            logCreated(saved);
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                logCreated(saved);
+            }
+        });
+    }
+
+    private void logCreated(TransferSchedule saved) {
         log.info("Agendamento id={} criado: origem={}, destino={}, valor=R$ {}, taxa total=R$ {}, "
                         + "transferencia em {}, agendado em {}",
                 saved.getId(),
@@ -87,13 +125,6 @@ public class TransferSchedulingService {
                 saved.getTotalFee(),
                 saved.getTransferDate(),
                 saved.getSchedulingDate());
-
-        return saved;
-    }
-
-    @Transactional(readOnly = true)
-    public List<TransferSchedule> listAll() {
-        return repository.findAllByOrderBySchedulingDateDescIdDesc();
     }
 
 }

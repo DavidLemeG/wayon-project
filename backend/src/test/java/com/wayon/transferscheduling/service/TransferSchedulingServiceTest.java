@@ -51,7 +51,7 @@ class TransferSchedulingServiceTest {
 
     @Test
     void agendaTransferenciaEPersisteAposCalculoDeTaxaComSucesso() {
-        Fee fee = new Fee(new BigDecimal("3.00"), new BigDecimal("0.0250"),
+        Fee fee = new Fee(0L, new BigDecimal("3.00"), new BigDecimal("0.0250"),
                 new BigDecimal("25.00"), new BigDecimal("28.00"));
         when(feeCalculator.calculate(any(), any(), any())).thenReturn(fee);
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -69,7 +69,7 @@ class TransferSchedulingServiceTest {
 
     @Test
     void dataDeAgendamentoVemDoRelogioInjetado() {
-        Fee fee = new Fee(new BigDecimal("3.00"), new BigDecimal("0.0250"),
+        Fee fee = new Fee(0L, new BigDecimal("3.00"), new BigDecimal("0.0250"),
                 new BigDecimal("25.00"), new BigDecimal("28.00"));
         when(feeCalculator.calculate(any(), any(), any())).thenReturn(fee);
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));

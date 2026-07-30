@@ -26,7 +26,7 @@ public class BracketFeeCalculator implements FeeCalculator {
         BigDecimal totalFee = fixedFee.add(rawPercentageFee).setScale(2, RoundingMode.HALF_UP);
         BigDecimal percentageFee = totalFee.subtract(fixedFee);
 
-        return new Fee(fixedFee, bracket.getPercentageRate(), percentageFee, totalFee);
+        return new Fee(daysBetween, fixedFee, bracket.getPercentageRate(), percentageFee, totalFee);
     }
 
 }
