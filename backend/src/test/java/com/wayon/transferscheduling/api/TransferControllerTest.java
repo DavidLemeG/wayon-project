@@ -15,11 +15,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -143,6 +146,33 @@ class TransferControllerTest {
 
         mockMvc.perform(get("/api/transfers"))
                 .andExpect(status().isOk());
+    }
+
+    /**
+     * Regressao: o @ExceptionHandler(Exception.class) generico capturava as
+     * excecoes que o proprio Spring MVC lanca para sinalizar erro do cliente e
+     * devolvia 500 — alem de gerar um ERROR com stack trace no log para quem so
+     * usou o verbo errado. O status precisa refletir a causa real.
+     */
+    @Test
+    void metodoNaoSuportadoRetorna405ComHeaderAllow() throws Exception {
+        mockMvc.perform(put("/api/transfers")
+                        .contentType("application/json")
+                        .content("{}"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(header().string("Allow", containsString("POST")))
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.message").isNotEmpty());
+    }
+
+    @Test
+    void contentTypeNaoSuportadoRetorna415() throws Exception {
+        mockMvc.perform(post("/api/transfers")
+                        .contentType("text/plain")
+                        .content("nao e json"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.status").value(415))
+                .andExpect(jsonPath("$.message").isNotEmpty());
     }
 
     private TransferRequest transferRequest(String originAccount, String destinationAccount,

@@ -22,6 +22,22 @@ class TransferSchedulingIntegrationTest {
     @Autowired
     private TestRestTemplate restTemplate;
 
+    /**
+     * O 404 tambem precisa sair no formato ApiError. Antes vinha no formato
+     * padrao do Spring, sem o campo "message" — e o front, que le
+     * error.response.data.message, recebia undefined justamente no caso em que
+     * mais precisa de uma mensagem.
+     */
+    @Test
+    void rotaInexistenteRetorna404NoFormatoApiError() {
+        ResponseEntity<String> response =
+                restTemplate.getForEntity("/api/rota-que-nao-existe", String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).contains("\"message\"");
+        assertThat(response.getBody()).contains("\"status\":404");
+    }
+
     @Test
     void agendaTransferenciaEDepoisApareceNoExtrato() {
         Map<String, Object> request = new HashMap<>();

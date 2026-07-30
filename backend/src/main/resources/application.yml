@@ -22,6 +22,20 @@ spring:
   jackson:
     time-zone: America/Sao_Paulo
 
+  mvc:
+    # Faz o Spring lancar NoHandlerFoundException em rota inexistente, em vez de
+    # delegar para a pagina de erro padrao. Assim o 404 tambem sai no formato
+    # ApiError (com "message"), mantendo o contrato unico de erro da ADR 0006 —
+    # antes o 404 vinha sem "message" e o front recebia undefined.
+    throw-exception-if-no-handler-found: true
+
+  web:
+    resources:
+      # Necessario junto do acima: com o handler de recursos estaticos ativo, ele
+      # atende qualquer rota nao mapeada e a excecao nunca chega a ser lancada.
+      # Esta API nao serve conteudo estatico (o front e uma aplicacao separada).
+      add-mappings: false
+
 server:
   port: 8080
 
