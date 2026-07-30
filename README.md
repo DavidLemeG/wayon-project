@@ -33,9 +33,10 @@ Vue 3 (Vite, porta 5173) --axios--> Spring Boot REST API (porta 8080) --> H2 (em
   persistido.
 - `BracketFeeCalculator` (Strategy) calcula a taxa a partir do enum
   `FeeBracket`, que modela as 6 faixas da tabela do enunciado.
-- `GlobalExceptionHandler` traduz toda falha (campo inválido, regra de
-  negócio violada, corpo malformado, erro inesperado) para um formato
-  único de erro (`ApiError`).
+- `GlobalExceptionHandler` traduz **toda** falha para um formato único
+  de erro (`ApiError`): campo inválido (400), regra de negócio violada
+  (422), corpo malformado (400), uso incorreto do protocolo (405 com
+  header `Allow`, 415), rota inexistente (404) e erro inesperado (500).
 
 ### Estrutura de pacotes do backend (package by feature)
 
@@ -50,6 +51,7 @@ com.wayon.transferscheduling/
   api/                      TransferController
     dto/                    TransferRequest, TransferResponse
     exception/              ApiError, GlobalExceptionHandler
+  common/                   AccountMasker (mascara conta para log)
   config/                   CorsConfig, ClockConfig
 ```
 
@@ -62,6 +64,8 @@ frontend/src/
   router/      /agendar, /extrato e rota coringa para caminho inexistente
   components/  TransferForm.vue, TransferList.vue (+ specs Vitest)
   views/       ScheduleTransferView.vue, StatementView.vue, NotFoundView.vue
+  config/      primevue-locale-pt-br.ts (o PrimeVue só embarca inglês)
+  test/        mountWithPrimeVue.ts (helper de montagem), setup.ts (stub de matchMedia)
 ```
 
 ## Stack
@@ -108,9 +112,11 @@ A URL da API vem da variável `VITE_API_BASE_URL` (definida em
 código). Para servir o front de outro host, basta defini-la no ambiente
 onde o build é gerado — não há URL fixa no código de aplicação.
 
-CORS já vem liberado para `localhost:5173`/`localhost:4173` por padrão
-(ver [ADR 0009](docs/adr/0009-cors-configuravel.md)) — não é preciso
-nenhuma configuração extra para rodar os dois juntos.
+CORS já vem liberado para **qualquer porta em `localhost`**
+(`app.cors.allowed-origin-patterns: http://localhost:*`) — não é preciso
+nenhuma configuração extra para rodar os dois juntos, e continua
+funcionando se o Vite subir em 5174 por a 5173 estar ocupada. Origens
+fora de localhost são recusadas. Ver [ADR 0009](docs/adr/0009-cors-configuravel.md).
 
 ## Como testar
 
