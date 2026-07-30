@@ -96,12 +96,13 @@ usuário `sa`, senha em branco).
 ```bash
 cd frontend
 npm install
-npm run dev
+npm start
 ```
 
-A aplicação sobe em `http://localhost:5173`. O backend precisa estar no
-ar antes (o front consome `http://localhost:8080` por padrão, configurável
-em `frontend/.env.development`).
+A aplicação sobe em `http://localhost:5173` (`npm run dev` faz o mesmo).
+O backend precisa estar no ar antes (o front consome
+`http://localhost:8080` por padrão, configurável em
+`frontend/.env.development`).
 
 CORS já vem liberado para `localhost:5173`/`localhost:4173` por padrão
 (ver [ADR 0009](docs/adr/0009-cors-configuravel.md)) — não é preciso
