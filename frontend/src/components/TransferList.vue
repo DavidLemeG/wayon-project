@@ -12,8 +12,6 @@ const transfers = ref<TransferResponse[]>([])
 const loading = ref(true)
 const errorMessage = ref<string | null>(null)
 
-defineExpose({ reload })
-
 async function reload() {
   loading.value = true
   errorMessage.value = null
