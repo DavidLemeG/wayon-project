@@ -269,6 +269,16 @@ Para inspecionar o SQL gerado durante o desenvolvimento:
   servindo o estático), amarrados por um `docker-compose.yml` na raiz,
   reduziriam a subida a um `docker compose up` — e eliminariam a classe
   de problema "funciona na minha máquina" com a versão de JDK/Node.
+- **Esteira de entrega (CI/CD)**: hoje as duas suítes rodam na máquina
+  de quem lembra de rodá-las. Um workflow no GitHub Actions executando
+  `mvnw test`, `npm run test` e `npm run build` a cada push tornaria a
+  suíte um **portão de merge** em vez de uma rotina manual — e é barato
+  de montar, já que os testes existem e passam. O passo seguinte seria
+  publicar a imagem (aproveitando o `Dockerfile` do item acima) e
+  promover para um ambiente de homologação a cada merge na `main`.
+  Provisionamento como código (Terraform) entra junto, mas só depois de
+  haver uma arquitetura de destino definida: com H2 em memória e sem
+  fila, cache ou cluster, ainda não há infraestrutura a descrever.
 - **Paginação do extrato**: `GET /api/transfers` devolve a lista
   inteira. Aceitável no escopo do desafio (H2 em memória, volume
   pequeno), mas não escalaria para um extrato com milhares de
