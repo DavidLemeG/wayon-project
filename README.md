@@ -116,17 +116,18 @@ cd backend
 ./mvnw test
 ```
 
-49 testes: fronteiras da tabela de taxas (`BracketFeeCalculatorTest`,
+52 testes: fronteiras da tabela de taxas (`BracketFeeCalculatorTest`,
 17 casos — cada faixa e as rejeições de data fora da janela/no passado),
 orquestração com mocks (`TransferSchedulingServiceTest`, prova que
 `repository.save()` nunca roda quando a taxa ou a regra de
 autotransferência rejeitam o agendamento), contrato HTTP
-(`TransferControllerTest`, `@WebMvcTest`), CORS (`CorsConfigTest`,
-`MockMvc` — preflight autorizado e recusado), mascaramento de dados
-sensíveis em log (`AccountMaskerTest`, prova que a conta completa nunca
-aparece) e um teste de integração ponta a ponta com H2 real
-(`TransferSchedulingIntegrationTest`, `@SpringBootTest` +
-`TestRestTemplate`).
+(`TransferControllerTest`, `@WebMvcTest` — inclui uso incorreto do
+protocolo: verbo não suportado → 405 com `Allow`, `Content-Type` inválido
+→ 415), CORS (`CorsConfigTest`, `MockMvc` — preflight autorizado e
+recusado), mascaramento de dados sensíveis em log (`AccountMaskerTest`,
+prova que a conta completa nunca aparece) e testes de integração ponta a
+ponta com H2 real (`TransferSchedulingIntegrationTest`, `@SpringBootTest`
++ `TestRestTemplate`, incluindo o 404 no formato `ApiError`).
 
 ### Frontend
 

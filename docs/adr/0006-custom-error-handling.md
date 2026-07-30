@@ -43,6 +43,43 @@ dele.
   para 422 — não é preciso tocar no `GlobalExceptionHandler` a cada nova
   exceção de negócio (Open/Closed).
 
+## Revisão — herdar de `ResponseEntityExceptionHandler`
+
+A primeira versão usava um `@ExceptionHandler(Exception.class)` como
+rede de segurança para "qualquer falha não prevista". Um code review
+posterior mostrou que ele capturava demais: as exceções que o **próprio
+Spring MVC** lança para sinalizar erro do cliente caíam nele e viravam
+**500**. Verificado com a aplicação rodando:
+
+| Requisição | Devolvia | Correto |
+|---|---|---|
+| `PUT /api/transfers` | 500 | **405** Method Not Allowed |
+| `POST` com `Content-Type: text/plain` | 500 | **415** Unsupported Media Type |
+
+Três consequências, todas reais:
+
+1. O cliente era informado de "erro interno" quando o erro era dele.
+2. A resposta 405 não trazia o header `Allow`, então não havia como
+   descobrir quais métodos a rota aceita.
+3. Cada caso gerava um **ERROR com stack trace** no log — exatamente o
+   ruído que a [ADR 0011](0011-logging-mascaramento.md) diz que ERROR
+   deve evitar. Um alerta baseado em ERROR passaria a disparar por
+   causa de um cliente usando o verbo errado.
+
+`GlobalExceptionHandler` passou a estender `ResponseEntityExceptionHandler`,
+que já mapeia essas exceções com o status correto; os overrides mantêm o
+corpo no formato `ApiError` e repassam os headers montados pelo Spring
+(incluindo o `Allow`). O `@ExceptionHandler(Exception.class)` continua
+existindo, mas agora só alcança o que de fato não é previsto — e aí
+ERROR é o nível certo.
+
+Na mesma revisão, o **404** também saiu do formato padrão do Spring
+(que não traz `message`, deixando o front com `undefined`) e passou a
+responder `ApiError`, via `spring.mvc.throw-exception-if-no-handler-found`
+combinado com `spring.web.resources.add-mappings: false` — o segundo é
+necessário porque, com o handler de recursos estáticos ativo, ele atende
+qualquer rota não mapeada e a exceção nunca chega a ser lançada.
+
 ## Alternativas consideradas
 - **`ProblemDetail`/RFC 7807 nativo**: mais padronizado, mas exige Spring
   6/Boot 3+, incompatível com a restrição de Java 11.
