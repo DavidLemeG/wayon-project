@@ -89,6 +89,8 @@ Maven não precisa estar instalado à parte — o projeto usa o wrapper
 cd backend
 # JAVA_HOME precisa apontar para uma JDK 11 (o Boot 2.7.18 é a linha
 # viável para essa restricao do enunciado, ver ADR 0001).
+# Então cheque se você tem nas variáveis de ambiente ou pela IDE que for usada para uso
+# apontando a versão correta 
 ./mvnw spring-boot:run
 ```
 
